@@ -1,0 +1,8 @@
+services:
+  tacbrief:
+    build: .
+    image: tacbrief:latest
+    container_name: tacbrief
+    ports:
+      - "8080:80"
+    restart: unless-stopped

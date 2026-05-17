@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --color-tac-bg: #0b0f14;
+  --color-tac-panel: #11161d;
+  --color-tac-border: #1f2a37;
+  --color-tac-accent: #34d399;
+  --color-tac-warn: #fbbf24;
+  --color-tac-danger: #f87171;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-attrib a {
+  background: rgba(11, 15, 20, 0.7) !important;
+  color: #cbd5e1 !important;
+}

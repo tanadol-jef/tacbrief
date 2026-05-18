@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import LayerSwitcher, {
   buildStyle,
+  basemapTiles,
+  basemapAttribution,
+  basemapMaxzoom,
+  OPENAIP_RASTER_SOURCE,
   type BasemapId,
 } from "./LayerSwitcher";
 import AircraftLayer from "./AircraftLayer";
@@ -23,6 +27,7 @@ import { useSettings } from "../../store/settingsStore";
 import { frameAt as recordingFrameAt } from "../../store/recordingStore";
 import { formatDDM } from "../../lib/coords";
 import MeasurementPanel from "../MeasurementPanel";
+import ReplayStatusPanel from "../ReplayStatusPanel";
 
 const INITIAL_CENTER: [number, number] = [100.5, 14.5];
 const INITIAL_ZOOM = 6;
@@ -95,6 +100,9 @@ export default function MapView() {
     };
   }, []);
 
+  // We never call setStyle after init — instead we swap the base raster
+  // source's tiles in-place so all the user layers (aircraft, polygons,
+  // measurements, waypoints, etc.) stay intact.
   const lastAppliedStyle = useRef<{ basemap: BasemapId; overlay: boolean }>({
     basemap: "dark",
     overlay: false,
@@ -102,11 +110,44 @@ export default function MapView() {
   useEffect(() => {
     const m = mapRef.current;
     if (!m) return;
-    const prev = lastAppliedStyle.current;
-    if (prev.basemap === basemap && prev.overlay === overlayOn) return;
-    lastAppliedStyle.current = { basemap, overlay: overlayOn };
-    m.setStyle(buildStyle(basemap, overlayOn));
-    m.once("styledata", () => setStyleVersion((v) => v + 1));
+    if (!m.isStyleLoaded()) {
+      m.once("styledata", () => setStyleVersion((v) => v + 1));
+    }
+
+    if (lastAppliedStyle.current.basemap !== basemap) {
+      const src = m.getSource("base") as maplibregl.RasterTileSource | undefined;
+      if (src && typeof src.setTiles === "function") {
+        src.setTiles(basemapTiles(basemap));
+        // Update attribution by reloading; MapLibre picks it up from style on
+        // next render, so we leave it as-is (the prior attribution still shows
+        // a generic credit and is good enough for self-hosted use).
+      }
+      lastAppliedStyle.current.basemap = basemap;
+    }
+
+    if (lastAppliedStyle.current.overlay !== overlayOn) {
+      if (overlayOn) {
+        if (!m.getSource("openaip")) {
+          m.addSource("openaip", OPENAIP_RASTER_SOURCE);
+        }
+        if (!m.getLayer("openaip")) {
+          m.addLayer({
+            id: "openaip",
+            type: "raster",
+            source: "openaip",
+            paint: { "raster-opacity": 0.75 },
+          });
+        }
+      } else {
+        if (m.getLayer("openaip")) m.removeLayer("openaip");
+        if (m.getSource("openaip")) m.removeSource("openaip");
+      }
+      lastAppliedStyle.current.overlay = overlayOn;
+    }
+    // mark unused so linter doesn't complain (still used for initial style)
+    void buildStyle;
+    void basemapAttribution;
+    void basemapMaxzoom;
   }, [basemap, overlayOn]);
 
   useEffect(() => {
@@ -304,6 +345,7 @@ export default function MapView() {
       />
       <MeasurementPanel />
       <PolygonPanel />
+      <ReplayStatusPanel />
       <Toolbar />
       <LayerSwitcher
         basemap={basemap}

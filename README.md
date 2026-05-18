@@ -58,14 +58,14 @@ npm run preview  # http://localhost:4173
        image: tacbrief:latest
        container_name: tacbrief
        ports:
-         - "8080:80"
+         - "8090:80"
        restart: unless-stopped
    ```
 
 3. **Provide the build context** (Dockge needs the source to run `build:`). Two options:
    - **Clone the repo on the host** into the stack directory Dockge created (typically `/mnt/.../stacks/tacbrief`), or
    - **Pre-build the image** elsewhere and replace `build: .` with `image: tacbrief:latest` referencing a pushed image.
-4. Click **Deploy**. Open `http://<truenas-host>:8080`.
+4. Click **Deploy**. Open `http://<truenas-host>:8090`.
 
 The image is a multi-stage build: `node:20-alpine` produces the `dist/`, then `nginx:alpine` serves it with gzip and SPA-style `try_files` fallback. Final image is ~25 MB.
 

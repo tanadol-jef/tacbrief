@@ -104,6 +104,20 @@ export function buildStyle(
   };
 }
 
+export function basemapTiles(id: BasemapId): string[] {
+  return SOURCES[id].tiles;
+}
+
+export function basemapAttribution(id: BasemapId): string {
+  return SOURCES[id].attribution;
+}
+
+export function basemapMaxzoom(id: BasemapId): number {
+  return SOURCES[id].maxzoom ?? 19;
+}
+
+export const OPENAIP_RASTER_SOURCE = OPENAIP_SOURCE;
+
 type Props = {
   basemap: BasemapId;
   onBasemapChange: (id: BasemapId) => void;

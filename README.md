@@ -56,6 +56,7 @@ npm run preview  # http://localhost:4173
      tacbrief:
        build: .
        image: tacbrief:latest
+       pull_policy: build
        container_name: tacbrief
        ports:
          - "8090:80"

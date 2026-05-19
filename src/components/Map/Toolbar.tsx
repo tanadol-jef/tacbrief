@@ -1,10 +1,9 @@
-import { Hand, MapPin, Plane, Ruler, Triangle } from "lucide-react";
+import { Hand, MapPin, Ruler, Triangle } from "lucide-react";
 import { useEffect } from "react";
 import { useTool, type ToolId } from "../../store/toolStore";
 
 const TOOLS: { id: ToolId; label: string; icon: typeof Hand }[] = [
   { id: "select", label: "Select / Pan", icon: Hand },
-  { id: "place", label: "Place aircraft", icon: Plane },
   { id: "waypoint", label: "Add waypoint", icon: MapPin },
   { id: "ruler", label: "Ruler (new)", icon: Ruler },
   { id: "protractor", label: "Protractor (new)", icon: Triangle },

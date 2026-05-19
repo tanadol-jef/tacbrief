@@ -9,14 +9,22 @@ import LayerSwitcher, {
   type BasemapId,
 } from "./LayerSwitcher";
 import AircraftLayer from "./AircraftLayer";
+import AircraftDragInteractions from "./AircraftDragInteractions";
 import AirportLayer from "./AirportLayer";
 import WaypointLayer from "./WaypointLayer";
 import MeasurementLayer from "./MeasurementLayer";
 import PolygonLayer from "./PolygonLayer";
+import PolygonEditInteractions from "./PolygonEditInteractions";
+import {
+  LYR_POLY_EDIT_MIDPOINTS,
+  LYR_POLY_EDIT_VERTICES,
+} from "./PolygonLayer";
 import RecordingLayer from "./RecordingLayer";
 import ReplayLayer from "./ReplayLayer";
-import DeclinationIndicator from "./DeclinationIndicator";
 import Toolbar from "./Toolbar";
+import MapStatusPanel from "./MapStatusPanel";
+import MapNavControls from "./MapNavControls";
+import FloatingTaskbar from "./FloatingTaskbar";
 import { usePolygons } from "../../store/polygonStore";
 import { useRecording } from "../../store/recordingStore";
 import PolygonPanel from "../PolygonPanel";
@@ -25,9 +33,9 @@ import { useMapStore } from "../../store/mapStore";
 import { useTool } from "../../store/toolStore";
 import { useSettings } from "../../store/settingsStore";
 import { frameAt as recordingFrameAt } from "../../store/recordingStore";
-import { formatDDM } from "../../lib/coords";
 import MeasurementPanel from "../MeasurementPanel";
 import ReplayStatusPanel from "../ReplayStatusPanel";
+import AircraftStatusPanel from "../AircraftStatusPanel";
 
 const INITIAL_CENTER: [number, number] = [100.5, 14.5];
 const INITIAL_ZOOM = 6;
@@ -45,7 +53,6 @@ export default function MapView() {
 
   const aircraft = useScenario((s) => s.aircraft);
   const selectedId = useScenario((s) => s.selectedId);
-  const setPosition = useScenario((s) => s.setPosition);
   const addWaypoint = useScenario((s) => s.addWaypoint);
 
   const flyTo = useMapStore((s) => s.flyTo);
@@ -59,6 +66,7 @@ export default function MapView() {
   const polygons = usePolygons((s) => s.polygons);
   const draftPoints = usePolygons((s) => s.draftPoints);
   const drawing = usePolygons((s) => s.drawing);
+  const polygonEditing = usePolygons((s) => s.editing);
   const addDraftPoint = usePolygons((s) => s.addDraftPoint);
   const finishDraft = usePolygons((s) => s.finishDraft);
 
@@ -82,10 +90,6 @@ export default function MapView() {
       return;
     }
     m.on("error", (e) => console.error("[TacBrief] map error:", e.error));
-    m.addControl(new maplibregl.NavigationControl({ visualizePitch: false }));
-    m.addControl(
-      new maplibregl.ScaleControl({ maxWidth: 120, unit: "nautical" }),
-    );
     m.on("mousemove", (e) =>
       setCursor({ lng: e.lngLat.lng, lat: e.lngLat.lat }),
     );
@@ -236,6 +240,19 @@ export default function MapView() {
     };
 
     const onClick = (e: maplibregl.MapMouseEvent) => {
+      if (
+        !drawing &&
+        m.getLayer(LYR_POLY_EDIT_VERTICES) &&
+        m.getLayer(LYR_POLY_EDIT_MIDPOINTS) &&
+        m
+          .queryRenderedFeatures(e.point, {
+            layers: [LYR_POLY_EDIT_VERTICES, LYR_POLY_EDIT_MIDPOINTS],
+          })
+          .length > 0
+      ) {
+        return;
+      }
+
       const lat = e.lngLat.lat;
       const lon = e.lngLat.lng;
       if (drawing) {
@@ -243,9 +260,6 @@ export default function MapView() {
         return;
       }
       switch (tool) {
-        case "place":
-          setPosition(selectedId as 1 | 2 | 3 | 4, lat, lon);
-          break;
         case "waypoint":
           addWaypoint(selectedId as 1 | 2 | 3 | 4, { lat, lon });
           break;
@@ -286,7 +300,6 @@ export default function MapView() {
     drawing,
     addDraftPoint,
     finishDraft,
-    setPosition,
     addWaypoint,
     addPoint,
   ]);
@@ -317,12 +330,20 @@ export default function MapView() {
         aircraft={aircraft}
         selectedId={selectedId}
       />
+      <AircraftDragInteractions map={map} styleReady={styleVersion} />
       <PolygonLayer
         map={map}
         styleReady={styleVersion}
         polygons={polygons}
         draftPoints={draftPoints}
         drawing={drawing}
+        editing={polygonEditing}
+      />
+      <PolygonEditInteractions
+        map={map}
+        styleReady={styleVersion}
+        drawing={drawing}
+        editing={polygonEditing}
       />
       <RecordingLayer
         map={map}
@@ -346,21 +367,17 @@ export default function MapView() {
       <MeasurementPanel />
       <PolygonPanel />
       <ReplayStatusPanel />
+      <AircraftStatusPanel />
       <Toolbar />
+      <MapNavControls map={map} />
       <LayerSwitcher
         basemap={basemap}
         onBasemapChange={setBasemap}
         overlay={overlayOn}
         onOverlayChange={setOverlayOn}
       />
-      <div className="pointer-events-none absolute bottom-2 left-2 flex items-center gap-3 rounded bg-tac-panel/80 px-2 py-1 font-mono text-xs text-slate-300 ring-1 ring-tac-border">
-        <span>
-          {cursor
-            ? formatDDM(cursor.lat, cursor.lng)
-            : "— move cursor over map —"}
-        </span>
-        <DeclinationIndicator map={map} />
-      </div>
+      <MapStatusPanel map={map} cursor={cursor} />
+      <FloatingTaskbar />
     </div>
   );
 }

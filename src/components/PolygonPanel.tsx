@@ -1,36 +1,67 @@
-import { Check, Download, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Check, Download, Minus, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useRef } from "react";
 import { usePolygons } from "../store/polygonStore";
 import { buildKmz, downloadKmz, readKmzOrKml } from "../lib/kmz";
+import { useDraggablePanel } from "../lib/useDraggablePanel";
+import { useSettings } from "../store/settingsStore";
 
 export default function PolygonPanel() {
   const fileRef = useRef<HTMLInputElement>(null);
+  const drag = useDraggablePanel("polygon", { bounds: "offsetParent" });
+  const minimized = useSettings((s) => s.minimizedPanels.polygon);
+  const setPanelMinimized = useSettings((s) => s.setPanelMinimized);
   const {
     polygons,
     drawing,
+    editing,
     draftPoints,
     startDrawing,
+    setEditing,
     finishDraft,
     cancelDraft,
     addPolygons,
+    setColor,
+    setFillColor,
     rename,
     remove,
     clearAll,
   } = usePolygons();
 
+  if (minimized) return null;
+
   return (
-    <div className="absolute left-14 top-2 z-30 w-60 rounded bg-tac-panel/95 ring-1 ring-tac-border backdrop-blur">
-      <div className="flex items-center justify-between border-b border-tac-border px-2 py-1.5 text-xs uppercase tracking-wider text-slate-400">
+    <div
+      ref={drag.ref}
+      style={drag.style}
+      className="absolute left-14 top-2 z-30 w-60 rounded bg-tac-panel/95 ring-1 ring-tac-border backdrop-blur"
+    >
+      <div
+        onPointerDown={drag.onPointerDown}
+        className={`flex touch-none cursor-move select-none items-center justify-between border-b border-tac-border px-2 py-1.5 text-xs uppercase tracking-wider text-slate-400 ${
+          drag.dragging ? "text-tac-accent" : ""
+        }`}
+      >
         <span>Polygons ({polygons.length})</span>
+        <div className="flex items-center gap-2">
         {polygons.length > 0 && (
           <button
             onClick={clearAll}
             title="Clear all"
+            data-no-drag
             className="text-slate-500 hover:text-tac-danger"
           >
             <Trash2 size={12} />
           </button>
         )}
+          <button
+            onClick={() => setPanelMinimized("polygon", true)}
+            title="Hide to taskbar"
+            data-no-drag
+            className="text-slate-500 hover:text-slate-200"
+          >
+            <Minus size={12} />
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-1 border-b border-tac-border p-2">
@@ -59,6 +90,18 @@ export default function PolygonPanel() {
             </button>
           </>
         )}
+        <button
+          onClick={() => setEditing(!editing)}
+          disabled={drawing || polygons.length === 0}
+          title="Show vertex edit handles"
+          className={`rounded px-2 py-1 text-xs ring-1 disabled:opacity-30 ${
+            editing
+              ? "bg-tac-accent/30 text-tac-accent ring-tac-accent/40"
+              : "bg-tac-border/30 text-slate-200 ring-transparent hover:bg-tac-border/60"
+          }`}
+        >
+          Edit
+        </button>
         <button
           onClick={() => fileRef.current?.click()}
           title="Import .kmz / .kml"
@@ -111,26 +154,65 @@ export default function PolygonPanel() {
           {polygons.map((p) => (
             <div
               key={p.id}
-              className="flex items-center gap-2 rounded border border-tac-border bg-tac-bg/40 px-2 py-1 text-xs"
+              className="rounded border border-tac-border bg-tac-bg/40 px-2 py-1 text-xs"
             >
-              <span
-                className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
-                style={{ background: p.color }}
-              />
-              <input
-                value={p.name}
-                onChange={(e) => rename(p.id, e.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-slate-100 focus:outline-none"
-              />
-              <span className="shrink-0 text-[10px] text-slate-500">
-                {p.outer.length} pt
-              </span>
-              <button
-                onClick={() => remove(p.id)}
-                className="shrink-0 text-slate-500 hover:text-tac-danger"
-              >
-                <X size={12} />
-              </button>
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
+                  style={{ background: p.color }}
+                />
+                <input
+                  value={p.name}
+                  onChange={(e) => rename(p.id, e.target.value)}
+                  className="min-w-0 flex-1 bg-transparent text-slate-100 focus:outline-none"
+                />
+                <span className="shrink-0 text-[10px] text-slate-500">
+                  {p.outer.length} pt
+                </span>
+                <button
+                  onClick={() => remove(p.id)}
+                  className="shrink-0 text-slate-500 hover:text-tac-danger"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <label
+                  className="flex shrink-0 items-center gap-1 text-[10px] uppercase tracking-wider text-slate-500"
+                  title="Outline color"
+                >
+                  <span>Line</span>
+                  <input
+                    type="color"
+                    value={p.color}
+                    onChange={(e) => setColor(p.id, e.target.value)}
+                    className="h-5 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                  />
+                </label>
+                <label
+                  className="flex shrink-0 items-center gap-1 text-[10px] uppercase tracking-wider text-slate-500"
+                  title="Fill color"
+                >
+                  <span>Fill</span>
+                  <input
+                    type="color"
+                    value={p.fillColor ?? p.color}
+                    onChange={(e) => setFillColor(p.id, e.target.value)}
+                    className="h-5 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                  />
+                </label>
+                <button
+                  onClick={() => setFillColor(p.id, null)}
+                  title="No fill"
+                  className={`ml-auto shrink-0 rounded px-1 py-0.5 text-[10px] uppercase tracking-wider ring-1 ${
+                    p.fillColor
+                      ? "text-slate-500 ring-tac-border hover:text-slate-200"
+                      : "text-tac-accent ring-tac-accent/50"
+                  }`}
+                >
+                  None
+                </button>
+              </div>
             </div>
           ))}
         </div>

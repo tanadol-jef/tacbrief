@@ -8,7 +8,6 @@ import type {
 
 export type ToolId =
   | "select"
-  | "place"
   | "waypoint"
   | "ruler"
   | "protractor";

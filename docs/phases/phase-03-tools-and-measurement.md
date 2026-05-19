@@ -4,13 +4,18 @@
 
 ## Goal
 
-Click-tools on the map: place aircraft, drop waypoints, measure distance/bearing, measure angles. Multiple measurements coexist and stay live as aircraft move.
+Map tools for dropping waypoints, measuring distance/bearing, and measuring
+angles. Aircraft are repositioned by dragging their symbols directly. Multiple
+measurements coexist and stay live as aircraft move.
 
 ## What landed
 
 ### Toolbar (left side of map)
 
-Modes: **Select/Pan, Place aircraft, Add waypoint, Ruler, Protractor**. Esc returns to Select.
+Modes: **Select/Pan, Add waypoint, Ruler, Protractor**. Esc returns to Select.
+
+v1.0.1 follow-up: aircraft placement moved out of the toolbar. Drag the
+aircraft symbol directly on the map to reposition it.
 
 ### Measurement system
 
@@ -42,6 +47,7 @@ Modes: **Select/Pan, Place aircraft, Add waypoint, Ruler, Protractor**. Esc retu
 
 - `src/store/toolStore.ts`
 - `src/components/Map/Toolbar.tsx`, `MeasurementLayer.tsx`
+- `src/components/Map/AircraftDragInteractions.tsx`
 - `src/components/MeasurementPanel.tsx`
 - `src/lib/coords.ts`
 

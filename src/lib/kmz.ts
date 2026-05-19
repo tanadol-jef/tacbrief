@@ -5,7 +5,8 @@ export type PolygonRing = { lat: number; lon: number }[];
 export type KmlPolygon = {
   id: string;
   name: string;
-  color: string; // CSS color
+  color: string; // outline CSS color
+  fillColor?: string | null; // null/undefined = no fill
   outer: PolygonRing;
   holes: PolygonRing[];
 };
@@ -38,7 +39,7 @@ function parseKml(text: string): KmlPolygon[] {
   let auto = 0;
   for (const pm of Array.from(placemarks)) {
     const name = textOf(pm, "name") ?? `Polygon ${++auto}`;
-    const styleColor = readStyleColor(doc, pm) ?? "#fbbf24";
+    const style = readStyleColors(doc, pm);
     const polygons = pm.getElementsByTagName("Polygon");
     for (const poly of Array.from(polygons)) {
       const outerCoords = readCoordinates(
@@ -55,7 +56,8 @@ function parseKml(text: string): KmlPolygon[] {
       out.push({
         id: `kmz-${out.length}-${Date.now().toString(36)}`,
         name,
-        color: styleColor,
+        color: style.lineColor ?? style.fillColor ?? "#fbbf24",
+        fillColor: style.fillColor,
         outer: outerCoords,
         holes: innerRings,
       });
@@ -82,33 +84,56 @@ function readCoordinates(el: Element | null): PolygonRing | null {
   return ring;
 }
 
-function readStyleColor(doc: Document, pm: Element): string | null {
+function readStyleColors(
+  doc: Document,
+  pm: Element,
+): { lineColor: string | null; fillColor: string | null } {
   // Try inline Style first, then look up by styleUrl.
   const inline = pm.getElementsByTagName("Style")[0];
-  const fromInline = inline ? extractKmlColor(inline) : null;
+  const fromInline = inline ? extractKmlColors(inline) : null;
   if (fromInline) return fromInline;
   const styleUrl = textOf(pm, "styleUrl");
-  if (!styleUrl) return null;
+  if (!styleUrl) return { lineColor: null, fillColor: null };
   const id = styleUrl.replace(/^#/, "");
   const styles = doc.getElementsByTagName("Style");
   for (const s of Array.from(styles)) {
-    if (s.getAttribute("id") === id) return extractKmlColor(s);
+    if (s.getAttribute("id") === id) return extractKmlColors(s);
   }
-  return null;
+  return { lineColor: null, fillColor: null };
 }
 
-function extractKmlColor(styleEl: Element): string | null {
-  const polyColor =
-    styleEl.querySelector("PolyStyle color")?.textContent?.trim() ?? null;
-  const lineColor =
-    styleEl.querySelector("LineStyle color")?.textContent?.trim() ?? null;
-  const kml = polyColor ?? lineColor;
+function extractKmlColors(styleEl: Element): {
+  lineColor: string | null;
+  fillColor: string | null;
+} {
+  const fillEnabled =
+    styleEl.querySelector("PolyStyle fill")?.textContent?.trim() !== "0";
+  const polyColor = parseKmlColor(
+    styleEl.querySelector("PolyStyle color")?.textContent?.trim() ?? null,
+  );
+  const lineColor = parseKmlColor(
+    styleEl.querySelector("LineStyle color")?.textContent?.trim() ?? null,
+  );
+  return {
+    lineColor: lineColor?.css ?? null,
+    fillColor:
+      fillEnabled && polyColor && polyColor.alpha > 0 ? polyColor.css : null,
+  };
+}
+
+function parseKmlColor(
+  kml: string | null,
+): { css: string; alpha: number } | null {
   if (!kml || kml.length !== 8) return null;
   // KML color is AABBGGRR; convert to #RRGGBB (ignore alpha).
+  const aa = kml.slice(0, 2);
   const bb = kml.slice(2, 4);
   const gg = kml.slice(4, 6);
   const rr = kml.slice(6, 8);
-  return `#${rr}${gg}${bb}`.toLowerCase();
+  return {
+    alpha: parseInt(aa, 16),
+    css: `#${rr}${gg}${bb}`.toLowerCase(),
+  };
 }
 
 // ---------- EXPORT ----------
@@ -123,10 +148,12 @@ export async function buildKmz(polygons: KmlPolygon[]): Promise<Blob> {
 export function buildKml(polygons: KmlPolygon[]): string {
   const styles = polygons
     .map((p, i) => {
-      const kmlColor = cssToKmlColor(p.color, 0x88);
+      const fillKmlColor = p.fillColor
+        ? cssToKmlColor(p.fillColor, 0x88)
+        : cssToKmlColor(p.color, 0x00);
       return `<Style id="s${i}">
         <LineStyle><color>${cssToKmlColor(p.color, 0xff)}</color><width>2</width></LineStyle>
-        <PolyStyle><color>${kmlColor}</color></PolyStyle>
+        <PolyStyle><color>${fillKmlColor}</color><fill>${p.fillColor ? 1 : 0}</fill></PolyStyle>
       </Style>`;
     })
     .join("\n");

@@ -1,10 +1,12 @@
 import { Settings as SettingsIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useSettings } from "../store/settingsStore";
+import { useDraggablePanel } from "../lib/useDraggablePanel";
 
 export default function SettingsPanel() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const drag = useDraggablePanel("settings");
   const s = useSettings();
 
   useEffect(() => {
@@ -28,8 +30,17 @@ export default function SettingsPanel() {
         <SettingsIcon size={14} />
       </button>
       {open && (
-        <div className="absolute right-0 top-10 z-40 w-72 rounded bg-tac-panel/95 p-3 text-xs ring-1 ring-tac-border backdrop-blur">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        <div
+          ref={drag.ref}
+          style={drag.style}
+          className="absolute right-0 top-10 z-40 w-72 rounded bg-tac-panel/95 p-3 text-xs ring-1 ring-tac-border backdrop-blur"
+        >
+          <div
+            onPointerDown={drag.onPointerDown}
+            className={`mb-2 touch-none cursor-move select-none text-[10px] font-semibold uppercase tracking-wider text-slate-400 ${
+              drag.dragging ? "text-tac-accent" : ""
+            }`}
+          >
             Settings
           </div>
           <NumberField
@@ -65,6 +76,26 @@ export default function SettingsPanel() {
             />
             Keep turn circles visible during turns
           </label>
+          <button
+            onClick={s.resetAllPanelPositions}
+            className="mt-3 w-full rounded bg-tac-border/30 px-2 py-1.5 text-xs text-slate-200 hover:bg-tac-border/60"
+          >
+            Reset floating windows
+          </button>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              onClick={s.saveCurrentPanelPositionsAsDefault}
+              className="rounded bg-tac-accent/20 px-2 py-1.5 text-xs text-tac-accent ring-1 ring-tac-accent/40 hover:bg-tac-accent/30"
+            >
+              Set current default
+            </button>
+            <button
+              onClick={s.clearDefaultPanelPositions}
+              className="rounded bg-tac-border/30 px-2 py-1.5 text-xs text-slate-300 hover:bg-tac-border/60"
+            >
+              Clear default
+            </button>
+          </div>
         </div>
       )}
     </div>

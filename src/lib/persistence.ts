@@ -1,4 +1,4 @@
-import type { Aircraft, FormationMode } from "../types";
+import type { Aircraft, FormationMode, ProgramTrigger } from "../types";
 import type { FormationPreset } from "./formations";
 
 const STORAGE_KEY = "tacbrief.scenario.v1";
@@ -8,6 +8,7 @@ export type Scenario = {
   version: number;
   savedAt: string;
   aircraft: Aircraft[];
+  programTriggers?: ProgramTrigger[];
   selectedId: number;
   formationMode: FormationMode;
   formationPreset: FormationPreset;
@@ -45,6 +46,7 @@ export function loadLocal(): Scenario | null {
 function migrate(s: Scenario): Scenario {
   return {
     ...s,
+    programTriggers: Array.isArray(s.programTriggers) ? s.programTriggers : [],
     aircraft: s.aircraft.map((a) => ({
       ...a,
       trail: Array.isArray(a.trail) ? a.trail : [],
@@ -52,6 +54,13 @@ function migrate(s: Scenario): Scenario {
       routeIndex: typeof a.routeIndex === "number" ? a.routeIndex : 0,
       steps: Array.isArray(a.steps) ? a.steps : [],
       stepIndex: typeof a.stepIndex === "number" ? a.stepIndex : 0,
+      ...(Object.prototype.hasOwnProperty.call(a, "programBlocks")
+        ? {
+            programBlocks: Array.isArray(a.programBlocks)
+              ? a.programBlocks
+              : [],
+          }
+        : {}),
       targetHeadingMagDeg:
         typeof a.targetHeadingMagDeg === "number" || a.targetHeadingMagDeg === null
           ? a.targetHeadingMagDeg
@@ -91,7 +100,7 @@ export async function importScenarioFile(file: File): Promise<Scenario | null> {
     const text = await file.text();
     const parsed = JSON.parse(text) as Scenario;
     if (parsed.version !== FILE_VERSION) return null;
-    return parsed;
+    return migrate(parsed);
   } catch {
     return null;
   }

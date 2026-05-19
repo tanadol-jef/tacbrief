@@ -19,7 +19,11 @@ This file is the **index**. Each phase lives in [`docs/phases/`](docs/phases/) w
 | 9 | [Waypoint editor & rollout heading](docs/phases/phase-09-waypoints-rollout.md) | ✅ Shipped |
 | 10 | [Record & replay](docs/phases/phase-10-record-replay.md) | ✅ Shipped |
 | 11 | [Deployment — Docker, GitHub, TrueNAS/Dockge](docs/phases/phase-11-deployment.md) | ✅ Shipped |
-| 12 | [**Next** — collapsible sidebar, movable panels, per-type aircraft icons](docs/phases/phase-12-next.md) | 🟡 Planned |
+| 12 | [Floating windows, minimizable taskbar & saved layouts](docs/phases/phase-12-floating-windows.md) | ✅ Shipped |
+| 13 | [Collapsible sidebar & map UI polish](docs/phases/phase-13-sidebar.md) | ✅ Shipped |
+| 14 | [Polygon vertex editing & styling](docs/phases/phase-14-polygon-vertex-editing.md) | ✅ Shipped |
+| 15 | [Scenario programming workflow & aircraft status window](docs/phases/phase-15-scenario-programming.md) | ✅ Shipped |
+| 16 | [**Next session** — provisions and postponed refinements](docs/phases/phase-16-next-session.md) | 🟡 Planned |
 
 ## Quick reference
 
@@ -39,4 +43,4 @@ This file is the **index**. Each phase lives in [`docs/phases/`](docs/phases/) w
 
 ## How to update
 
-When a new phase starts, copy [`docs/phases/phase-12-next.md`](docs/phases/phase-12-next.md) into a fresh `phase-NN-<topic>.md`, add an entry to the table above, and start writing.
+When a new phase starts, copy [`docs/phases/phase-16-next-session.md`](docs/phases/phase-16-next-session.md) into a fresh `phase-NN-<topic>.md`, add an entry to the table above, and start writing.

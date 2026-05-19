@@ -3,10 +3,12 @@ import SidePanel from "./components/Panel/SidePanel";
 import TopBar from "./components/TopBar";
 import { useSimulation } from "./lib/useSimulation";
 import { useHotkeys } from "./lib/useHotkeys";
+import { useSettings } from "./store/settingsStore";
 
 export default function App() {
   useSimulation();
   useHotkeys();
+  const sidebarHidden = useSettings((s) => s.sidebarHidden);
   return (
     <div
       className="flex flex-col overflow-hidden bg-tac-bg text-slate-100"
@@ -14,7 +16,7 @@ export default function App() {
     >
       <TopBar />
       <div className="flex" style={{ flex: 1, minHeight: 0 }}>
-        <SidePanel />
+        {!sidebarHidden && <SidePanel />}
         <main
           className="relative"
           style={{ flex: 1, minHeight: 0, minWidth: 0 }}

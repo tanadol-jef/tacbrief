@@ -5,8 +5,6 @@ import { summarizeTurn } from "../../lib/flightMath";
 import { useScenario } from "../../store/scenarioStore";
 import { clamp, wrap360 } from "../../lib/units";
 import Slider from "./Slider";
-import ManeuverEditor from "./ManeuverEditor";
-import WaypointEditor from "./WaypointEditor";
 
 const PRESET_LIST = Object.values(AIRCRAFT_PRESETS);
 
@@ -198,8 +196,6 @@ export default function AircraftCard({ a }: { a: Aircraft }) {
         )}
       </div>
 
-      {selected && <ManeuverEditor a={a} />}
-      {selected && <WaypointEditor a={a} />}
       <div className="mt-3 grid grid-cols-3 gap-2 border-t border-tac-border pt-2 font-mono text-[11px] text-slate-400">
         <Stat label="TAS" value={`${t.tasKt.toFixed(0)} kt`} />
         <Stat

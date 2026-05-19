@@ -26,6 +26,167 @@ export type ManeuverStep =
   | { kind: "set-altitude"; altFt: number; climbRateFpm?: number }
   | { kind: "hold"; seconds: number; remaining?: number };
 
+export type ProgramEventCondition =
+  | {
+      kind: "headingCross";
+      sourceAircraftId: AircraftId;
+      headingMagDeg: number;
+      toleranceDeg: number;
+    }
+  | {
+      kind: "blockComplete";
+      sourceAircraftId: AircraftId;
+      blockId: string;
+      toleranceDeg: number;
+    }
+  | {
+      kind: "waypointCaptured";
+      sourceAircraftId?: AircraftId;
+      waypointIndex: number;
+      toleranceDeg?: number;
+    }
+  | {
+      kind: "vectorPass";
+      sourceAircraftId: AircraftId;
+      referenceAircraftId: AircraftId;
+      toleranceDeg: number;
+    };
+
+export type ProgramStartCondition =
+  | { kind: "immediate" }
+  | { kind: "afterSeconds"; seconds: number }
+  | ProgramEventCondition
+  | { kind: "triggerFired"; triggerId: string };
+
+export type ProgramExitCondition =
+  | { kind: "actionComplete" }
+  | { kind: "afterSeconds"; seconds: number }
+  | { kind: "headingCaptured" }
+  | ProgramEventCondition
+  | { kind: "triggerFired"; triggerId: string };
+
+export type ProgramHeadingLane =
+  | {
+      enabled: true;
+      mode: "heading";
+      targetHeadingMagDeg: number;
+      loadFactorG: number;
+      turnControl?: "g" | "bank";
+      bankDeg?: number;
+    }
+  | {
+      enabled: true;
+      mode: "waypoint";
+      waypointIndex: number;
+      loadFactorG: number;
+      turnControl?: "g" | "bank";
+      bankDeg?: number;
+    }
+  | {
+      enabled: true;
+      mode: "aircraftHeading";
+      referenceAircraftId: AircraftId;
+      loadFactorG: number;
+      turnControl?: "g" | "bank";
+      bankDeg?: number;
+    };
+
+export type ProgramSpeedLane = {
+  enabled: boolean;
+  targetSpeedKt: number;
+};
+
+export type ProgramAltitudeLane = {
+  enabled: boolean;
+  mode?: "set" | "climb";
+  targetAltFt: number;
+  climbRateFpm: number;
+};
+
+export type ProgramHoldLane = {
+  enabled: boolean;
+};
+
+export type ProgramBlock = {
+  id: string;
+  label: string;
+  start: ProgramStartCondition;
+  exit: ProgramExitCondition;
+  lanes: {
+    heading?: ProgramHeadingLane;
+    speed?: ProgramSpeedLane;
+    altitude?: ProgramAltitudeLane;
+    hold?: ProgramHoldLane;
+  };
+};
+
+export type ProgramTrigger =
+  | {
+      id: string;
+      label: string;
+      kind: "headingCross";
+      sourceAircraftId: AircraftId;
+      headingMagDeg: number;
+      toleranceDeg: number;
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "blockComplete";
+      sourceAircraftId: AircraftId;
+      blockId: string;
+      toleranceDeg: number;
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "vectorPass";
+      sourceAircraftId: AircraftId;
+      referenceAircraftId: AircraftId;
+      toleranceDeg: number;
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "waypointCaptured";
+      sourceAircraftId: AircraftId;
+      waypointIndex: number;
+      toleranceDeg: number;
+    };
+
+export type ProgramEventType =
+  | "block-started"
+  | "block-completed"
+  | "trigger-armed"
+  | "trigger-fired"
+  | "route-waypoint-captured";
+
+export type ProgramEvent = {
+  id: string;
+  time: number;
+  aircraftId?: AircraftId;
+  callsign?: string;
+  type: ProgramEventType;
+  detail: string;
+};
+
+export type AircraftProgramRuntime = {
+  activeBlockIndex: number | null;
+  blockStartedAt: number | null;
+  waitingBlockIndex: number | null;
+  waitingStartedAt: number | null;
+  completedBlockIds: string[];
+  resolvedHeadingMagDeg?: number;
+};
+
+export type ProgramRuntime = {
+  aircraft: Record<number, AircraftProgramRuntime>;
+  firedTriggerIds: string[];
+  firedConditionKeys: string[];
+  armedConditionKeys: string[];
+  capturedWaypointKeys: string[];
+};
+
 export type FormationMode = "independent" | "linked";
 
 export type TrailPoint = { lat: number; lon: number; t: number };
@@ -53,6 +214,7 @@ export type Aircraft = {
   trail: TrailPoint[];
   steps: ManeuverStep[];
   stepIndex: number;
+  programBlocks: ProgramBlock[];
   /** Target heading (°M) for ad-hoc turn rollout. Null = no target, keep turning. */
   targetHeadingMagDeg: number | null;
 };

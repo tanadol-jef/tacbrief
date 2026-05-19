@@ -16,7 +16,8 @@ const LYR_TRAIL = "ac-trail";
 const LYR_CIRCLES_FILL = "ac-circles-fill";
 const LYR_CIRCLES_LINE = "ac-circles-line";
 const LYR_HEADING = "ac-heading";
-const LYR_POINTS = "ac-points";
+export const LYR_AIRCRAFT_HITBOX = "ac-hitbox";
+export const LYR_AIRCRAFT_POINTS = "ac-points";
 const LYR_LABELS = "ac-labels";
 
 const ICON_ID = "tac-aircraft";
@@ -132,9 +133,21 @@ function ensureLayers(map: maplibregl.Map) {
       },
     });
   }
-  if (!map.getLayer(LYR_POINTS)) {
+  if (!map.getLayer(LYR_AIRCRAFT_HITBOX)) {
     map.addLayer({
-      id: LYR_POINTS,
+      id: LYR_AIRCRAFT_HITBOX,
+      type: "circle",
+      source: SRC_POINTS,
+      paint: {
+        "circle-radius": 18,
+        "circle-color": "#ffffff",
+        "circle-opacity": 0.01,
+      },
+    });
+  }
+  if (!map.getLayer(LYR_AIRCRAFT_POINTS)) {
+    map.addLayer({
+      id: LYR_AIRCRAFT_POINTS,
       type: "symbol",
       source: SRC_POINTS,
       layout: {

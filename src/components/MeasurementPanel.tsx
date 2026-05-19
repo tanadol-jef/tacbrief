@@ -1,11 +1,13 @@
 import { useMemo } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Minus, Pencil, Plus, Trash2, X } from "lucide-react";
 import * as turf from "@turf/turf";
 import { useTool, resolveAnchor } from "../store/toolStore";
 import { useScenario } from "../store/scenarioStore";
 import { frameAt, useRecording } from "../store/recordingStore";
 import type { AircraftId, Measurement } from "../types";
 import { trueToMag } from "../lib/magnetic";
+import { useDraggablePanel } from "../lib/useDraggablePanel";
+import { useSettings } from "../store/settingsStore";
 
 export default function MeasurementPanel() {
   const {
@@ -19,6 +21,9 @@ export default function MeasurementPanel() {
     clearAll,
   } = useTool();
   const aircraft = useScenario((s) => s.aircraft);
+  const minimized = useSettings((s) => s.minimizedPanels.measurement);
+  const setPanelMinimized = useSettings((s) => s.setPanelMinimized);
+  const drag = useDraggablePanel("measurement", { bounds: "offsetParent" });
 
   const lookup = useMemo(() => {
     const m = new Map<AircraftId, { lat: number; lon: number }>();
@@ -37,11 +42,30 @@ export default function MeasurementPanel() {
     return m;
   }, [imported, replayMode, replayTime]);
 
+  if (minimized) return null;
+
   if (measurements.length === 0) {
     return (
-      <div className="absolute bottom-2 right-2 z-30 w-60 rounded bg-tac-panel/95 ring-1 ring-tac-border backdrop-blur">
-        <div className="flex items-center justify-between border-b border-tac-border px-2 py-1.5 text-xs uppercase tracking-wider text-slate-400">
-          Measurements
+      <div
+        ref={drag.ref}
+        style={drag.style}
+        className="absolute bottom-2 right-2 z-30 w-60 rounded bg-tac-panel/95 ring-1 ring-tac-border backdrop-blur"
+      >
+        <div
+          onPointerDown={drag.onPointerDown}
+          className={`flex touch-none cursor-move select-none items-center justify-between border-b border-tac-border px-2 py-1.5 text-xs uppercase tracking-wider text-slate-400 ${
+            drag.dragging ? "text-tac-accent" : ""
+          }`}
+        >
+          <span>Measurements</span>
+          <button
+            onClick={() => setPanelMinimized("measurement", true)}
+            title="Hide to taskbar"
+            data-no-drag
+            className="text-slate-500 hover:text-slate-200"
+          >
+            <Minus size={12} />
+          </button>
         </div>
         <div className="flex flex-col gap-1 p-2">
           <button
@@ -62,16 +86,36 @@ export default function MeasurementPanel() {
   }
 
   return (
-    <div className="absolute bottom-2 right-2 z-30 w-72 rounded bg-tac-panel/95 ring-1 ring-tac-border backdrop-blur">
-      <div className="flex items-center justify-between border-b border-tac-border px-2 py-1.5 text-xs uppercase tracking-wider text-slate-400">
+    <div
+      ref={drag.ref}
+      style={drag.style}
+      className="absolute bottom-2 right-2 z-30 w-72 rounded bg-tac-panel/95 ring-1 ring-tac-border backdrop-blur"
+    >
+      <div
+        onPointerDown={drag.onPointerDown}
+        className={`flex touch-none cursor-move select-none items-center justify-between border-b border-tac-border px-2 py-1.5 text-xs uppercase tracking-wider text-slate-400 ${
+          drag.dragging ? "text-tac-accent" : ""
+        }`}
+      >
         <span>Measurements ({measurements.length})</span>
-        <button
-          onClick={clearAll}
-          title="Clear all"
-          className="text-slate-500 hover:text-tac-danger"
-        >
-          <Trash2 size={12} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={clearAll}
+            title="Clear all"
+            data-no-drag
+            className="text-slate-500 hover:text-tac-danger"
+          >
+            <Trash2 size={12} />
+          </button>
+          <button
+            onClick={() => setPanelMinimized("measurement", true)}
+            title="Hide to taskbar"
+            data-no-drag
+            className="text-slate-500 hover:text-slate-200"
+          >
+            <Minus size={12} />
+          </button>
+        </div>
       </div>
       <div className="flex max-h-72 flex-col gap-1 overflow-y-auto p-2">
         {measurements.map((m) => (

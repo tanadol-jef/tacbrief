@@ -1,10 +1,16 @@
 import { useMemo } from "react";
+import { Minus } from "lucide-react";
 import { frameAt, useRecording } from "../store/recordingStore";
+import { useDraggablePanel } from "../lib/useDraggablePanel";
+import { useSettings } from "../store/settingsStore";
 
 export default function ReplayStatusPanel() {
   const imported = useRecording((s) => s.imported);
   const replayMode = useRecording((s) => s.replayMode);
   const replayTime = useRecording((s) => s.replayTime);
+  const minimized = useSettings((s) => s.minimizedPanels.replayStatus);
+  const setPanelMinimized = useSettings((s) => s.setPanelMinimized);
+  const drag = useDraggablePanel("replayStatus", { bounds: "offsetParent" });
 
   const frame = useMemo(() => {
     if (!imported || !replayMode) return [];
@@ -13,12 +19,27 @@ export default function ReplayStatusPanel() {
     );
   }, [imported, replayMode, replayTime]);
 
-  if (!replayMode || frame.length === 0) return null;
+  if (!replayMode || frame.length === 0 || minimized) return null;
 
   return (
-    <div className="absolute left-14 bottom-2 z-30 flex flex-col gap-1 rounded bg-tac-panel/95 px-2 py-2 ring-1 ring-tac-accent/40 backdrop-blur">
-      <div className="text-[10px] uppercase tracking-wider text-tac-accent">
-        Replay status
+    <div
+      ref={drag.ref}
+      style={drag.style}
+      className="absolute left-14 bottom-2 z-30 flex flex-col gap-1 rounded bg-tac-panel/95 px-2 py-2 ring-1 ring-tac-accent/40 backdrop-blur"
+    >
+      <div
+        onPointerDown={drag.onPointerDown}
+        className="flex touch-none cursor-move select-none items-center justify-between gap-3 text-[10px] uppercase tracking-wider text-tac-accent"
+      >
+        <span>Replay status</span>
+        <button
+          onClick={() => setPanelMinimized("replayStatus", true)}
+          title="Hide to taskbar"
+          data-no-drag
+          className="text-slate-500 hover:text-slate-200"
+        >
+          <Minus size={12} />
+        </button>
       </div>
       <div className="flex flex-col gap-1">
         {frame.map((ac) => (

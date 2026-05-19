@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useScenario } from "../store/scenarioStore";
+import { useSettings } from "../store/settingsStore";
 import type { AircraftId } from "../types";
 
 function isEditableTarget(t: EventTarget | null): boolean {
@@ -19,6 +20,12 @@ export function useHotkeys() {
       if (isEditableTarget(e.target)) return;
 
       const { aircraft, select, playing, play, pause } = useScenario.getState();
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        useSettings.getState().toggleSidebar();
+        return;
+      }
 
       if (e.code === "Space") {
         e.preventDefault();

@@ -132,7 +132,7 @@ export default function LayerSwitcher({
   onOverlayChange,
 }: Props) {
   return (
-    <div className="absolute right-2 top-2 flex flex-col gap-2 rounded bg-tac-panel/90 p-2 text-xs ring-1 ring-tac-border backdrop-blur">
+    <div className="absolute bottom-2 right-2 z-30 flex flex-col gap-2 rounded bg-tac-panel/90 p-2 text-xs ring-1 ring-tac-border backdrop-blur">
       <div className="font-semibold uppercase tracking-wider text-slate-400">
         Basemap
       </div>

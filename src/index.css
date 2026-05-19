@@ -28,3 +28,28 @@ body {
   background: rgba(11, 15, 20, 0.7) !important;
   color: #cbd5e1 !important;
 }
+
+.compact-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(52, 211, 153, 0.45) rgba(17, 22, 29, 0.35);
+  scrollbar-gutter: stable;
+}
+
+.compact-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.compact-scrollbar::-webkit-scrollbar-track {
+  background: rgba(17, 22, 29, 0.35);
+}
+
+.compact-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.7);
+  border: 1px solid #11161d;
+  border-radius: 999px;
+}
+
+.compact-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.75);
+}

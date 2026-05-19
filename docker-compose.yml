@@ -1,6 +1,9 @@
 services:
   tacbrief:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      pull: true
     image: tacbrief:latest
     pull_policy: build
     container_name: tacbrief
